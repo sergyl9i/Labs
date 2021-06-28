@@ -1,13 +1,12 @@
 #include <stdio.h>
 #define N 8
 
-
 int main()
 {	
 
 int massive[N][N];
 int ZMEIKA[N][N];
-		printf("Massive with glavdiagonal\n");
+		printf("Filling matrix\n");
 for (int i = 0; i < N; ++i){
 	for (int j = 0; j < N; ++j){
 		if ((i+j) < N - 1)
@@ -24,12 +23,12 @@ for (int i = 0; i < N; ++i){
 	}
 }
 int g=0;	
-printf("Vvedite pervoe chislo\n");
+printf("Enter a first nubmer at matrix for filling in a spiral\n");
 scanf("%d",&g);
 int m=1;
 if(N%2 != 0)
 ZMEIKA[N/2][N/2]=N*N+g-1;
-		printf("Zapolnenie massiva po spiral\n");
+		printf("Filling in a spiral\n");
 for (int i = 0; i < (N/2); ++i){
 	for (int j = i; j < N-m*i; ++j){
 		ZMEIKA[i][j]=g;
