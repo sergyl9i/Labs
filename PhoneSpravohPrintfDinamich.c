@@ -11,6 +11,7 @@ struct PhoneDirectory
     char name[N];
     char surename[S];
     struct PhoneDirectory *next;
+    struct PhoneDirectory *previous;
 };
 
 long int getNubmer(){
@@ -19,7 +20,7 @@ long int getNubmer(){
   while (enterValue == 1){
     printf("Ввведите номер телефона:\n");
     scanf("%ld",&phoneNumber);
-    if (phoneNumber == 0){
+    if (phoneNumber <= 0){
       printf("Некорректный ввод. Повторите ещё раз.\n");
       while ((getchar()) != '\n');
     }
@@ -31,14 +32,14 @@ long int getNubmer(){
 }
 
 void *getName(char *startName){
-    while ((getchar()) != '\n');
-    printf("Ввведите имя:\n");
-    scanf("%10s",startName);
+  printf("Ввведите имя:\n");
+  //fgets(startName, N, stdin);
+  scanf("%10s",startName);
 }
 
 void *getSureame(char *startSurename){
-  while ((getchar()) != '\n');
   printf("Ввведите фамилию:\n");
+  //fgets(startSurename, S, stdin);
   scanf("%20s",startSurename);
 }
 
@@ -54,26 +55,31 @@ struct PhoneDirectory *init(long int zd, char *namePolz, char *surenamePolz){
     first->surename[i] = surenamePolz[i];
   }
   first->next = NULL;
+  first->previous = NULL;
   //printf("Возвращаемый указатель для коня root + после next: %p | %p\n",first,(*first).next);
   return (first);
 }
 
 struct PhoneDirectory *add(struct PhoneDirectory *act, long int number, char *namePolz, char *surenamePolz) {
-  struct PhoneDirectory *actually, *p;
+  struct PhoneDirectory *new, *secondary;
   int i;
-  actually = (struct PhoneDirectory*)malloc(sizeof(struct PhoneDirectory));
-  p = act->next; // сохранение указателя на следующий узел
-  act->next = actually; // предыдущий узел указывает на создаваемый
-  actually->phoneNumber = number; // сохранение поля данных добавляемого узла
+  new = (struct PhoneDirectory*)malloc(sizeof(struct PhoneDirectory));
+  secondary = act->next; 
+  act->next = new; 
+  new->phoneNumber = number; 
   for (i = 0; i < N; i++){
-    actually->name[i] = namePolz[i];
+    new->name[i] = namePolz[i];
   }
   for (i = 0; i < S; i++){
-    actually->surename[i] = surenamePolz[i];
+    new->surename[i] = surenamePolz[i];
   }
-  actually->next = p; // созданный узел указывает на следующий элемент
-  //printf("Возвращаемый указатель после добавления нового элемента для last + после next: %p | %p\n",actually,(*actually).next);
-  return(actually);
+  new->next = secondary; 
+  new->previous = act;
+  if (secondary != NULL){
+    secondary->previous = new;
+  }
+  //printf("Возвращаемый указатель после добавления нового элемента для last + после next: %p | %p\n",new,(*new).next);
+  return(new);
 }
 
 void listprint(struct PhoneDirectory *first)
@@ -81,66 +87,53 @@ void listprint(struct PhoneDirectory *first)
   struct PhoneDirectory *p;
   p = first;
   do {
-    printf("%ld %s %s\n", p->phoneNumber, p->name, p->surename); // вывод значения элемента p
-    p = p->next; // переход к следующему узлу
+    printf("%ld %s %s\n", p->phoneNumber, p->name, p->surename); 
+    p = p->next;
   } while (p != NULL);
 }
 
-struct PhoneDirectory *deletePhoneDirecorory(struct PhoneDirectory *isk, struct PhoneDirectory *koren)
+struct PhoneDirectory *deleteRecord(struct PhoneDirectory *delet)
 {
-  struct PhoneDirectory *temp;
-  temp = koren;
-  while (temp->next != isk){ // пока не найдем узел, предшествующий lst
-    temp = temp->next;
-  }
-  temp->next = isk->next; // переставляем указатель
-  free(isk); // освобождаем память удаляемого узла
-  return(temp);
-}
-
-struct PhoneDirectory *deleteRecord(struct PhoneDirectory *end, struct PhoneDirectory *koren, long int nubmer)
-{
-  struct PhoneDirectory *temp, *isk;
-  temp = koren;
-  while (((*temp).phoneNumber != nubmer) && (temp != end)){ 
-    isk = temp;
-    temp = temp->next;
-  }
-  if ((*temp).phoneNumber == nubmer){
-    isk->next = temp->next; // переставляем указатель
-    printf("Удалили запись с номером %ld %s %s\n", (*temp).phoneNumber, (*temp).name, (*temp).surename);
-    free(temp); // освобождаем память удаляемого узла
-    //printf("Возвращаемый указатель после удаления + после next : %p | %p\n",isk,(*isk).next);
-    return(isk);
-  }
-  else{
-    printf("Записи c номером %ld нет!\n", (*temp).phoneNumber);
-    return(end);
-  }
+  struct PhoneDirectory *step, *prev;
+  prev = delet->previous;
+  step = delet->next;
+  if (prev != NULL)
+    prev->next = delet->next;
+  if (step != NULL)
+    step->previous = delet->previous;
+  printf("Удалили запись %ld %s %s\n", (*delet).phoneNumber, (*delet).name, (*delet).surename);
+  free(delet); 
+  //printf("Возвращаемый указатель после удаления + после next : %p | %p\n",isk,(*isk).next);
+  return(prev);
 }
 
 struct PhoneDirectory *deletehead(struct PhoneDirectory *root)
 {
   struct PhoneDirectory *temp;
   temp = root->next;
-  free(root); // освобождение памяти текущего корня
-  //printf("Удалили корень\n");
-  return(temp); // новый корень списка
+  printf("Удалили запись %ld %s %s\n", (*root).phoneNumber, (*root).name, (*root).surename);
+  free(root); 
+  return(temp);
 }
 
-void findRecord(struct PhoneDirectory *end, struct PhoneDirectory *koren, long int nubmer)
+struct PhoneDirectory *findRecord(struct PhoneDirectory *koren, long int nubmer)
 {
-  struct PhoneDirectory *temp, *isk;
-  temp = koren;
-  while (((*temp).phoneNumber != nubmer) && (temp != end)){
-    temp = temp->next;
+  struct PhoneDirectory *isk;
+  isk = koren;
+  while (((*isk).phoneNumber != nubmer) && (isk->next != NULL)){
+    isk = isk->next;
   }
-  if ((*temp).phoneNumber == nubmer){
-    printf("Нашли запись c номером %ld %s %s\n", (*temp).phoneNumber, (*temp).name, (*temp).surename);
+  if ((*isk).phoneNumber == nubmer){
+    return(isk);
   }
   else{
-    printf("Записи c номером %ld нет!\n", (*temp).phoneNumber);
+    return(NULL);
   }
+}
+
+void printfRecord(struct PhoneDirectory *record)
+{
+    printf("Нашли запись c номером %ld %s %s\n", (*record).phoneNumber, (*record).name, (*record).surename);
 }
 
 int main() {	
@@ -159,8 +152,11 @@ int main() {
       switch(choice) {
       case '1':
         phoneNumber = getNubmer();
+        while ((getchar()) != '\n');
         getName(name);
+        while ((getchar()) != '\n');
         getSureame(surename);
+        while ((getchar()) != '\n');
         if (0 == initDirectory){
           root = init(phoneNumber,name,surename);
           last = root;
@@ -168,8 +164,8 @@ int main() {
           initDirectory = 1;
         }
         else {
-            last = add(last,phoneNumber,name,surename);
-            present = last;
+          last = add(last,phoneNumber,name,surename);
+          present = last;
         }
       break;
       case '2':
@@ -179,15 +175,21 @@ int main() {
         else{
           printf("Удаление элетемента по номеру телефона\n");
           phoneNumber = getNubmer();
+          present = findRecord(root, phoneNumber);
           if (present == root){
-            present = deletehead(root);
-            initDirectory = 0;
+            root = deletehead(present);
+            if (root == NULL){
+              initDirectory = 0;
+            }
+          }
+          else if (present == last){
+            last = deleteRecord(present);
+          }
+          else if (present == NULL){
+              printf("Записи с таким номером телефона нет!\n");
           }
           else{
-            present = deleteRecord(last,root,phoneNumber);
-            if (present->next != NULL){
-              present = last;
-            }
+            present = deleteRecord(present);
           }
         }
       break;
@@ -196,9 +198,14 @@ int main() {
           printf("Телефонный справочник пуст!\n");
         }
         else{
-        printf("Поиск элетемента по номеру телефона\n");
-        phoneNumber = getNubmer();
-        findRecord(last,root,phoneNumber);
+          printf("Поиск элетемента по номеру телефона\n");
+          phoneNumber = getNubmer();
+          if (findRecord(root,phoneNumber) != NULL){
+            printfRecord(findRecord(root,phoneNumber));
+          }
+          else{
+            printf("Записи с таким номером не существует!\n");
+          }
         }
       break;
       case '4':
@@ -213,10 +220,10 @@ int main() {
       case '5':
         printf("Спасибо что запускали наш справочник!\n");
         if (1 == initDirectory){
-          while (present != root){
-            present = deletePhoneDirecorory(last,root);
+          while (last != root){
+            last = deleteRecord(last);
           }
-          root = deletehead(root);
+          last = deletehead(last);
         }
         break;
       default:
